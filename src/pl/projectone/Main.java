@@ -1,6 +1,12 @@
 package pl.projectone;
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import javax.swing.*;
 
@@ -66,7 +72,7 @@ class guiCard {
         }
         if (playerType == 3) { // human
             corY = 500;
-            corX = (handSize-1) * 100;
+            corX = (handSize-1) * 120;
             sizeX = 100;
             sizeY = 152;
         }
@@ -118,9 +124,17 @@ class myCard extends JComponent {
     private static final int DEFAULT_WIDTH = 800;
     private static final int DEFAULT_HEIGHT = 500;
     private ArrayList<guiCard> guiCards;
+    private ArrayList<Rectangle2D> cardBounds;
+    private guiCard currCard;
+    private Rectangle2D currBound;
+    private int currB = -1;
+    private int currC = -1;
 
     public myCard() {
         guiCards = new ArrayList<>();
+        cardBounds = new ArrayList<>();
+        addMouseMotionListener(new MouseMotionHandler());
+        //addMouseListener(new MouseHandler());
     }
 
     public void paintComponent(Graphics g) {
@@ -128,6 +142,8 @@ class myCard extends JComponent {
 
         for (guiCard cards : guiCards) {
             cardImage = new ImageIcon(cards.getCardImagePath()).getImage();
+            cardBounds.add(new Rectangle2D.Double(cards.getCorX(), cards.getCorY(), cards.getSizeX(), cards.getSizeY()));
+
             g.drawImage(cardImage,
                     cards.getCorX(),
                     cards.getCorY(),
@@ -144,6 +160,79 @@ class myCard extends JComponent {
     public void addCard(guiCard gC) {
         guiCards.add(gC);
         repaint();
+    }
+
+    public int checkBounds(Point2D point) {
+        for (Rectangle2D rects : cardBounds) {
+            if (rects.contains(point)) return cardBounds.indexOf(rects);
+        }
+        return -1;
+    }
+
+    private class MouseHandler extends MouseAdapter {
+
+        public void mouseClicked(MouseEvent mEvent) {
+            currB = checkBounds(mEvent.getPoint());
+            if (currB > -1) {
+                guiCards.get(currB).setCorY(guiCards.get(currB).getCorY()-50);
+                cardBounds.get(currB).setFrame(
+                        cardBounds.get(currB).getX(),
+                        cardBounds.get(currB).getY()-50,
+                        cardBounds.get(currB).getWidth(),
+                        cardBounds.get(currB).getHeight());
+                repaint();
+            }
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            if (currB > -1) {
+                guiCards.get(currB).setCorY(guiCards.get(currB).getCorY()+50);
+                cardBounds.get(currB).setFrame(
+                        cardBounds.get(currB).getX(),
+                        cardBounds.get(currB).getY()+50,
+                        cardBounds.get(currB).getWidth(),
+                        cardBounds.get(currB).getHeight());
+                repaint();
+            }
+        }
+    }
+
+    private class MouseMotionHandler implements MouseMotionListener {
+
+        public void mouseMoved(MouseEvent mEvent) {
+            //if (checkBounds(mEvent.getPoint()) == -1) setCursor(Cursor.getDefaultCursor());
+            //else setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+
+            currB = checkBounds(mEvent.getPoint());
+
+            if (currC != currB && currC > -1) {
+                guiCards.get(currC).setCorY(guiCards.get(currC).getCorY()+50);
+                //cardBounds.get(currC).setFrame(
+                //        cardBounds.get(currC).getX(),
+                //        cardBounds.get(currC).getY()+50,
+                //        cardBounds.get(currC).getWidth(),
+                //        cardBounds.get(currC).getHeight());
+                repaint();
+                currC = -1;
+            }
+
+            if ((currB > -1) && (cardBounds.get(currB).getY() == guiCards.get(currB).getCorY())) {
+                guiCards.get(currB).setCorY(guiCards.get(currB).getCorY()-50);
+                //cardBounds.get(currB).setFrame(
+                //        cardBounds.get(currB).getX(),
+                //        cardBounds.get(currB).getY()-50,
+                //        cardBounds.get(currB).getWidth(),
+                //        cardBounds.get(currB).getHeight());
+                currC = currB;
+                repaint();
+            }
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent mEvent) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
     }
 
 }
