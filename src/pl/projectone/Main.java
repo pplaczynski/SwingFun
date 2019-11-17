@@ -1,10 +1,7 @@
 package pl.projectone;
 
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -12,27 +9,98 @@ import javax.swing.*;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 
         myCard cardsPrint = new myCard();
+
         cardsPrint.addCard(new guiCard(1, 2, 1, 3));
         cardsPrint.addCard(new guiCard(2, 6, 2, 3));
         cardsPrint.addCard(new guiCard(3, 6, 3, 3));
         cardsPrint.addCard(new guiCard(3, 6, 1, 1));
         cardsPrint.addCard(new guiCard(3, 6, 1, 2));
 
+        //var panel = new JPanel();
+        JButton butt = new JButton("ok");
+        butt.setSize(50, 20);
+        butt.setSize(new Dimension(200, 20));
+        butt.setLocation(new Point(100, 200));
+        // panel.add(cardsPrint);
+        //panel.add(butt);
+        MyButton butt2 = new MyButton();
+
+        Runnable watekRamka = new Runnable() {
+            @Override
+            public void run() {
+                var ramka = new myFirstFrame("My First Frame");
+                ramka.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                //ramka.getContentPane().setLayout(null);
+                ramka.add(cardsPrint, BorderLayout.CENTER);
+                ramka.add(butt, BorderLayout.SOUTH);
+                ramka.add(butt2, BorderLayout.SOUTH);
+                //ramka.add(panel);
+                ramka.setVisible(true);
+            }
+        };
+
+        butt2.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                synchronized (watekRamka) {
+                    watekRamka.notifyAll();
+                }
+            }
+        });
+
+
+        EventQueue.invokeLater(watekRamka);
+
+        /*
         EventQueue.invokeLater(() -> {
             var ramka = new myFirstFrame("My First Frame");
             ramka.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            ramka.add(cardsPrint);
+            //ramka.getContentPane().setLayout(null);
+            ramka.add(cardsPrint, BorderLayout.CENTER);
+            ramka.add(butt, BorderLayout.SOUTH);
+            ramka.add(butt2, BorderLayout.SOUTH);
+            //ramka.add(panel);
             ramka.setVisible(true);
         });
 
+         */
+
         cardsPrint.addCard(new guiCard(4, 2, 4, 3));
 
+        for (int i = 1; i < 10; i++) {
+            synchronized (watekRamka){
+                butt2.setText(Integer.toString(i));
+                watekRamka.wait();
+            }
+        }
 
+        butt.setText("done");
 
+    }
+}
 
+class Warunek {
+    private boolean war;
+    private Runnable watek1;
+
+    public Warunek(Runnable wat1) {
+        war = true;
+        watek1 = wat1;
+    }
+
+    public Runnable getWatek1() {
+        return watek1;
+    }
+
+    public void setWar(boolean war) {
+        this.war = war;
+    }
+
+    public boolean isWar() {
+        return war;
     }
 }
 
@@ -119,6 +187,10 @@ class guiCard {
     }
 }
 
+class MyButton extends JButton {
+
+}
+
 class myCard extends JComponent {
 
     private static final int DEFAULT_WIDTH = 800;
@@ -129,6 +201,8 @@ class myCard extends JComponent {
     private Rectangle2D currBound;
     private int currB = -1;
     private int currC = -1;
+    private Warunek war1;
+    private Runnable watek;
 
     public myCard() {
         guiCards = new ArrayList<>();
@@ -157,6 +231,14 @@ class myCard extends JComponent {
         return new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
 
+    public void setWatek(Runnable watek) {
+        this.watek = watek;
+    }
+
+    public void setWar1(Warunek war1) {
+        this.war1 = war1;
+    }
+
     public void addCard(guiCard gC) {
         guiCards.add(gC);
         repaint();
@@ -172,30 +254,31 @@ class myCard extends JComponent {
     private class MouseHandler extends MouseAdapter {
 
         public void mouseClicked(MouseEvent mEvent) {
-            currB = checkBounds(mEvent.getPoint());
-            if (currB > -1) {
-                guiCards.get(currB).setCorY(guiCards.get(currB).getCorY()-50);
-                cardBounds.get(currB).setFrame(
-                        cardBounds.get(currB).getX(),
-                        cardBounds.get(currB).getY()-50,
-                        cardBounds.get(currB).getWidth(),
-                        cardBounds.get(currB).getHeight());
-                repaint();
-            }
+
+            //currB = checkBounds(mEvent.getPoint());
+            //if (currB > -1) {
+            //    guiCards.get(currB).setCorY(guiCards.get(currB).getCorY()-50);
+            //    cardBounds.get(currB).setFrame(
+            //            cardBounds.get(currB).getX(),
+            //            cardBounds.get(currB).getY()-50,
+            //            cardBounds.get(currB).getWidth(),
+            //            cardBounds.get(currB).getHeight());
+            //    repaint();
+            //}
         }
 
-        @Override
-        public void mouseReleased(MouseEvent e) {
-            if (currB > -1) {
-                guiCards.get(currB).setCorY(guiCards.get(currB).getCorY()+50);
-                cardBounds.get(currB).setFrame(
-                        cardBounds.get(currB).getX(),
-                        cardBounds.get(currB).getY()+50,
-                        cardBounds.get(currB).getWidth(),
-                        cardBounds.get(currB).getHeight());
-                repaint();
-            }
-        }
+        //@Override
+        //public void mouseReleased(MouseEvent e) {
+        //    if (currB > -1) {
+        //        guiCards.get(currB).setCorY(guiCards.get(currB).getCorY()+50);
+        //        cardBounds.get(currB).setFrame(
+        //                cardBounds.get(currB).getX(),
+        //                cardBounds.get(currB).getY()+50,
+        //                cardBounds.get(currB).getWidth(),
+        //                cardBounds.get(currB).getHeight());
+        //        repaint();
+        //    }
+        //}
     }
 
     private class MouseMotionHandler implements MouseMotionListener {
